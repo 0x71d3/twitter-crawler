@@ -16,6 +16,7 @@ access_token_secret = os.getenv('ACCESS_TOKEN_SECRET')
 
 sources = ['Twitter for Android', 'Twitter for iPhone', 'Twitter Web App']    
 
+
 def filter_status(status):
     if 'http' in status.full_text:  # url
         return False
@@ -27,6 +28,16 @@ def filter_status(status):
         return False
     return True
 
+
+def clean_full_text(status):
+    full_text = status.full_text
+
+    full_text = re.sub(r'@\w{1,15}\s+', '', full_text, re.ASCII)
+    full_text = full_text.replace('\n', ' ')
+
+    return full_text
+
+
 while True:
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
@@ -34,8 +45,7 @@ while True:
     api = tweepy.API(auth, wait_on_rate_limit=True)
 
     screen_names = set()
-    for status in api.search(random.choice(string.ascii_letters),
-            lang='en', result_type='recent', count=100, tweet_mode='extended'):
+    for status in api.search(random.choice(string.ascii_letters), lang='en', result_type='recent', count=100, tweet_mode='extended'):
         if status.source in sources:
             screen_names.add(status.author.screen_name)
     # print(screen_names)
@@ -45,12 +55,10 @@ while True:
     in_reply_to_screen_names = set()
     for screen_name in screen_names:
         try:
-            for status in api.user_timeline(screen_name,
-                    count=200, tweet_mode='extended'):
+            for status in api.user_timeline(screen_name, count=200, tweet_mode='extended'):
                 if filter_status(status):
                     id2status[status.id] = status
-                    if (status.in_reply_to_screen_name is not None
-                            and status.in_reply_to_screen_name not in screen_names):
+                    if status.in_reply_to_screen_name is not None and status.in_reply_to_screen_name not in screen_names:
                         in_reply_to_screen_names.add(status.in_reply_to_screen_name)
         except Exception as e:
             continue
@@ -58,8 +66,7 @@ while True:
 
     for screen_name in in_reply_to_screen_names:
         try:
-            for status in api.user_timeline(screen_name,
-                    count=200, tweet_mode='extended'):
+            for status in api.user_timeline(screen_name, count=200, tweet_mode='extended'):
                 if filter_status(status):
                     id2status[status.id] = status
         except Exception as e:
@@ -72,13 +79,11 @@ while True:
             id2replyid[status.in_reply_to_status_id] = status.id
     # print(id2replyid)
 
-    with open('pairs.txt', 'a', encoding='utf-8') as f:
+    with open('pairs.tsv', 'a', encoding='utf-8') as f:
         for id_, replyid in id2replyid.items():
-            tweet1 = id2status[id_].full_text.replace('\n', ' ')
-            tweet1 = re.sub(r'@[0-9a-zA-Z_]{1,15} +', '', tweet1)
+            tweet = clean_full_text(id2status[id_])
+            reply = clean_full_text(id2status[replyid])
 
-            tweet2 = id2status[replyid].full_text.replace('\n', ' ')
-            tweet2 = re.sub(r'@[0-9a-zA-Z_]{1,15} +', '', tweet2)
+            f.write(tweet + '\t' + reply + '\n')
 
-            f.write(tweet1+ '\t' + tweet2 + '\n')
-    print('Write ' + str(len(id2replyid)) + ' pairs.')
+    print('Write', len(id2replyid), 'pairs.')
