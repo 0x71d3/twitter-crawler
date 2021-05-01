@@ -40,6 +40,9 @@ while True:
         try:
             user_timeline = api.user_timeline(user_id=user_id, count=200, tweet_mode='extended')
             for status in user_timeline:
+                if status.source not in sources:
+                    continue
+
                 if len(status.entities['hashtags']) > 0 or 'media' in status.entities or len(status.entities['urls']) > 0:
                     continue
                 
@@ -57,6 +60,9 @@ while True:
         try:
             user_timeline = api.user_timeline(user_id=in_reply_to_user_id, count=200, tweet_mode='extended')
             for status in user_timeline:
+                if status.source not in sources:
+                    continue
+
                 if len(status.entities['hashtags']) > 0 or 'media' in status.entities or len(status.entities['urls']) > 0:
                     continue
 
@@ -84,7 +90,7 @@ while True:
             user_ids.append(status_id_to_user_id[status_id])
 
             if status_id not in status_id_to_in_reply_to_status_id.keys():  # is root
-                if len(full_texts) >= 4 and len(set(user_ids)) == 2 and len(set(user_ids[0::2])) == 1 and len(set(user_ids[1::2])) == 1:
+                if len(full_texts) >= 2 and len(set(user_ids)) == 2 and len(set(user_ids[0::2])) == 1 and len(set(user_ids[1::2])) == 1:
                     dialogues.append(reversed(full_texts))
                 
                 break
@@ -95,4 +101,4 @@ while True:
         for dialogue in dialogues:
             f.write('\t'.join(dialogue) + '\n')
 
-    print(f'Write {len(dialogues)} dialogues.')
+    print(f'{len(dialogues)} dialogues written')

@@ -1,2 +1,4 @@
 .env
-pairs.tsv
+
+tsvs/
+*.tsv
