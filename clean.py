@@ -3,13 +3,20 @@ import glob
 import re
 import sys
 
-ja = re.compile(r'[\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]+')
 screen_name = re.compile(r'@[a-zA-Z0-9_]{1,15}')
+
+ja = re.compile(r'[\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]+')
+repetition = re.compile(r'(.)\1{4}')
 
 with open('cleaned.tsv', 'w', encoding='utf-8') as f:
     pass
 
-for tsv in sorted(glob.glob('tsvs/*.tsv')):
+tsvs = sorted(glob.glob('tsvs/*.tsv'))
+n_dialogues = []
+
+for tsv in tsvs:
+    i = 0
+
     with open(tsv, encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
 
@@ -24,9 +31,21 @@ for tsv in sorted(glob.glob('tsvs/*.tsv')):
 
                 if not ja.fullmatch(full_text):
                     break
-                    
+                
+                if repetition.search(full_text):  # more than 4 times
+                    break
+
+                if len(full_text) < 4:  # less than 4 characters
+                    break
+
                 full_texts.append(full_text)
 
             else:
-                with open('cleaned.tsv', 'a', encoding='utf-8') as f:
-                    f.write('\t'.join(full_texts) + '\n')
+                with open('cleaned.tsv', 'a', encoding='utf-8') as g:
+                    g.write('\t'.join(full_texts) + '\n')
+                
+                i += 1
+        
+    n_dialogues.append(i)
+
+print(f'Read {len(n_dialogues)} TSVs: {sum(n_dialogues)} dialogues')
