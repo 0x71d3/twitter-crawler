@@ -1,26 +1,51 @@
 import csv
+import glob
 import re
 import sys
 
-ja = re.compile(r'[\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]+')
 screen_name = re.compile(r'@[a-zA-Z0-9_]{1,15}')
 
-with open(sys.argv[1], encoding='utf-8', newline='') as f:
-    reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
+ja = re.compile(r'[\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]+')
+repetition = re.compile(r'(.)\1{4}')
 
-    for row in reader:
-        full_texts = []
+with open('cleaned.tsv', 'w', encoding='utf-8') as f:
+    pass
 
-        for full_text in row:
-            full_text = full_text.rstrip()
+tsvs = sorted(glob.glob('tsvs/*.tsv'))
+n_dialogues = []
 
-            while screen_name.match(full_text):
-                full_text = screen_name.sub('', full_text).lstrip()
+for tsv in tsvs:
+    i = 0
 
-            if not ja.fullmatch(full_text):
-                break
+    with open(tsv, encoding='utf-8', newline='') as f:
+        reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
 
-            full_texts.append(full_text)
+        for row in reader:
+            full_texts = []
 
-        else:
-            print(*full_texts, sep='\t')
+            for full_text in row:
+                full_text = full_text.rstrip()
+
+                while screen_name.match(full_text):
+                    full_text = screen_name.sub('', full_text).strip()
+
+                if not ja.fullmatch(full_text):
+                    break
+                
+                if repetition.search(full_text):  # more than 4 times
+                    break
+
+                if len(full_text) < 4:  # less than 4 characters
+                    break
+
+                full_texts.append(full_text)
+
+            else:
+                with open('cleaned.tsv', 'a', encoding='utf-8') as g:
+                    g.write('\t'.join(full_texts) + '\n')
+                
+                i += 1
+        
+    n_dialogues.append(i)
+
+print(f'Read {len(n_dialogues)} TSVs: {sum(n_dialogues)} dialogues')
