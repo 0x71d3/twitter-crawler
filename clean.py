@@ -12,15 +12,17 @@ with open('cleaned.tsv', 'w', encoding='utf-8') as f:
     pass
 
 tsvs = sorted(glob.glob('tsvs/*.tsv'))
-n_dialogues = []
+n_dialogues = 0
+
+n_orig = 0
 
 for tsv in tsvs:
-    i = 0
-
     with open(tsv, encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
 
         for row in reader:
+            n_orig += 1
+
             full_texts = []
 
             for full_text in row:
@@ -44,8 +46,6 @@ for tsv in tsvs:
                 with open('cleaned.tsv', 'a', encoding='utf-8') as g:
                     g.write('\t'.join(full_texts) + '\n')
                 
-                i += 1
-        
-    n_dialogues.append(i)
+                n_dialogues += 1
 
-print(f'Read {len(n_dialogues)} TSVs: {sum(n_dialogues)} dialogues')
+print(f'Write {n_dialogues} dialogues: {n_dialogues / n_orig:%} of the total')
