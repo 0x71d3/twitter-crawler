@@ -1,27 +1,27 @@
 import csv
 import glob
+import os
 import re
-import sys
+from collections import defaultdict
 
 screen_name = re.compile(r'@[a-zA-Z0-9_]{1,15}')
 
 ja = re.compile(r'[\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]+')
 repetition = re.compile(r'(.)\1{4}')
 
-with open('cleaned.tsv', 'w', encoding='utf-8') as f:
-    pass
+turn_to_dialogues = defaultdict(list)
 
-tsvs = sorted(glob.glob('tsvs/*.tsv'))
+n_total = 0
 n_dialogues = 0
 
-n_orig = 0
+tsvs = sorted(glob.glob('tsvs/*.tsv'))
 
 for tsv in tsvs:
     with open(tsv, encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
 
         for row in reader:
-            n_orig += 1
+            n_total += 1
 
             full_texts = []
 
@@ -43,9 +43,13 @@ for tsv in tsvs:
                 full_texts.append(full_text)
 
             else:
-                with open('cleaned.tsv', 'a', encoding='utf-8') as g:
-                    g.write('\t'.join(full_texts) + '\n')
+                turn_to_dialogues[len(full_texts)].append(full_texts)
                 
                 n_dialogues += 1
 
-print(f'Write {n_dialogues} dialogues: {n_dialogues / n_orig:%} of the total')
+for turn, dialogues in turn_to_dialogues.items():
+    with open(os.path.join('cleaned', f'{turn}.tsv'), 'w', encoding='utf-8') as f:
+        for dialogue in dialogues:
+            f.write('\t'.join(dialogue) + '\n')
+
+print(f'Write {n_dialogues} dialogues: {n_dialogues / n_total:%} of the total')
