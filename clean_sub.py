@@ -1,26 +1,27 @@
 import csv
-import glob
 import html
+import os
 import re
 
 from tqdm import tqdm
 
 screen_name = re.compile(r'(^| )@[a-zA-Z0-9_]{1,15}($| )')
 
-ja = re.compile(r'[\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]+')
+# not_ja = re.compile(r'[^\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]')
+not_ja = re.compile(r'[^ \u3000-\u30ff\u4e00-\u9fff]')
 
 repetition = re.compile(r'(.)\1{4}')
 
-with open('cleaned.tsv', 'w', encoding='utf-8') as f:
-    pass
+src_dir = 'tsvs'
+dst_dir = 'sub'
 
 n_raw = 0
 n_written = 0
 
-tsvs = sorted(glob.glob('tsvs/*.tsv'))
-
-for tsv in tqdm(tsvs):
-    with open(tsv, encoding='utf-8', newline='') as f:
+for tsv in tqdm(os.listdir(src_dir)):
+    dialogues = []
+    
+    with open(os.path.join(src_dir, tsv), encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
 
         for row in reader:
@@ -33,9 +34,8 @@ for tsv in tqdm(tsvs):
 
                 full_text = screen_name.sub('', full_text)
 
-                if not ja.fullmatch(full_text):
-                    break
-                
+                full_text = ' '.join(not_ja.sub('', full_text).split())
+
                 if repetition.search(full_text):  # more than 4 times
                     break
 
@@ -45,9 +45,11 @@ for tsv in tqdm(tsvs):
                 full_texts.append(full_text)
 
             else:
-                with open('cleaned.tsv', 'a', encoding='utf-8') as g:
-                    g.write('\t'.join(full_texts) + '\n')
-                
+                dialogues.append('\t'.join(full_texts))
+
                 n_written += 1
+
+    with open(os.path.join(dst_dir, tsv), 'w', encoding='utf-8') as f:
+        f.write('\n'.join(dialogues) + '\n')
 
 print(f'Write {n_written} dialogues: {n_written / n_raw:%} of the total')

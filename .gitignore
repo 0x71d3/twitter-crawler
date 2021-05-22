@@ -3,5 +3,7 @@
 tsvs/
 *.tsv
 
+sub/
+
 cleaned/
 wakati/
