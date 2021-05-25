@@ -1,16 +1,20 @@
 import csv
 import os
 
+from tqdm import tqdm
 import zenhan
 from pyknp import Juman
 
 jumanpp = Juman()
 
-tsvs = os.listdir('cleaned')
+turn_dir = 'turn'
+wakati_dir = 'wakati'
 
-for tsv in tsvs:
+tsvs = sorted(os.listdir(turn_dir))
+
+for tsv in tqdm(tsvs):
     tmp = []
-    with open(os.path.join('cleaned', tsv), newline='') as f:
+    with open(os.path.join(turn_dir, tsv), newline='') as f:
         reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
 
         for row in reader:
@@ -24,7 +28,7 @@ for tsv in tsvs:
             
             tmp.append(wakati_row)
     
-    with open(os.path.join('wakati', tsv), 'w', newline='') as f:
+    with open(os.path.join(wakati_dir, tsv), 'w', newline='') as f:
         writer = csv.writer(f, delimiter='\t', quoting=csv.QUOTE_NONE)
 
         writer.writerows(tmp)
