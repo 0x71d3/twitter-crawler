@@ -5,10 +5,8 @@ import re
 
 from tqdm import tqdm
 
-screen_name = re.compile(r'(^| )@[a-zA-Z0-9_]{1,15}($| )')
-
-ja = re.compile(r'[\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]+')
-
+screen_name = re.compile(r'((^| )@[a-zA-Z0-9_]{1,15})+($| )')
+not_ja = re.compile(r'[^\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]')
 repetition = re.compile(r'(.)\1{4}')
 
 with open('cleaned.tsv', 'w', encoding='utf-8') as f:
@@ -24,22 +22,18 @@ for tsv in tqdm(tsvs):
         reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
 
         for row in reader:
-            n_raw += 1
-
             full_texts = []
+            n_raw += 1
 
             for full_text in row:
                 full_text = html.unescape(full_text)
-
                 full_text = screen_name.sub('', full_text)
 
-                if not ja.fullmatch(full_text):
+                if not_ja.search(full_text):
                     break
-                
-                if repetition.search(full_text):  # more than 4 times
+                if repetition.search(full_text):
                     break
-
-                if len(full_text) < 4:  # less than 4 characters
+                if len(full_text) < 4:
                     break
 
                 full_texts.append(full_text)

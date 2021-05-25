@@ -7,7 +7,7 @@ from collections import defaultdict
 
 from tqdm import tqdm
 
-screen_name = re.compile(r'@[a-zA-Z0-9_]{1,15}')
+screen_name = re.compile(r'((^| )@[a-zA-Z0-9_]{1,15})+($| )')
 not_ja = re.compile(r'[^\u0000-\u007f\u3000-\u30ff\u4e00-\u9fff]')
 repetition = re.compile(r'(.)\1{4}')
 
@@ -29,16 +29,13 @@ for tsv in tqdm(tsvs):
 
             for full_text in row:
                 full_text = html.unescape(full_text)
-
-                full_text = ' '.join(screen_name.sub('', full_text).split())
+                full_text = screen_name.sub('', full_text)
 
                 if not_ja.search(full_text):
                     break
-                
-                if repetition.search(full_text):  # more than 4 times
+                if repetition.search(full_text):
                     break
-
-                if len(full_text) < 4:  # less than 4 characters
+                if len(full_text) < 4:
                     break
 
                 full_texts.append(full_text)
