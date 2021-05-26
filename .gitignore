@@ -2,8 +2,5 @@
 
 tsvs/
 
-cleaned.tsv
-sub/
-
-turn/
-wakati/
+turn*/
+wakati*/

@@ -1,5 +1,6 @@
 import csv
 import os
+import sys
 
 from tqdm import tqdm
 import zenhan
@@ -7,10 +8,10 @@ from pyknp import Juman
 
 jumanpp = Juman()
 
-turn_dir = 'turn'
-wakati_dir = 'wakati'
+turn_dir = sys.argv[1]
+wakati_dir = sys.argv[2]
 
-tsvs = sorted(os.listdir(turn_dir))
+tsvs = os.listdir(turn_dir)
 
 for tsv in tqdm(tsvs):
     tmp = []
