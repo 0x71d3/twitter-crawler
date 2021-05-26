@@ -1,9 +1,6 @@
 .env
 
 tsvs/
-*.tsv
 
-sub/
-
-cleaned/
-wakati/
+turn*/
+wakati*/
