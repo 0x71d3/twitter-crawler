@@ -1,11 +1,16 @@
+import argparse
 import os
-import re
-import sys
 from datetime import datetime
 from tqdm import tqdm
 
 from dotenv import load_dotenv
 import tweepy
+
+sources = ['Twitter for Android', 'Twitter for iPhone', 'Twitter Web App']
+
+parser = argparse.ArgumentParser()
+parser.add_argument('output_dir')
+args = parser.parse_args()
 
 load_dotenv()
 
@@ -19,12 +24,10 @@ auth.set_access_token(access_token, access_token_secret)
 
 api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
-sources = ['Twitter for Android', 'Twitter for iPhone', 'Twitter Web App']
-
 while True:
     user_ids = set()
 
-    search_results = api.search(q='あ', lang='ja', result_type='recent', count=100, tweet_mode='extended')
+    search_results = api.search(q='い', lang='ja', result_type='recent', count=100, tweet_mode='extended')
     for status in tqdm(search_results):
         if status.source in sources:
             user_ids.add(status.author.id)
@@ -53,7 +56,7 @@ while True:
                     in_reply_to_user_ids.add(status.in_reply_to_user_id)
                     status_id_to_in_reply_to_status_id[status.id] = status.in_reply_to_status_id
 
-        except tweepy.error.TweepError:
+        except tweepy.TweepError:
             pass
 
     for in_reply_to_user_id in tqdm(in_reply_to_user_ids - user_ids):
@@ -72,13 +75,12 @@ while True:
                 if status.in_reply_to_status_id is not None:
                     status_id_to_in_reply_to_status_id[status.id] = status.in_reply_to_status_id
 
-        except tweepy.error.TweepError:
+        except tweepy.TweepError:
             pass
 
     dialogues = []
 
-    status_ids = set(status_id_to_in_reply_to_status_id.keys()) - set(status_id_to_in_reply_to_status_id.values())
-    for status_id in tqdm(status_ids):  # is leaf
+    for status_id in tqdm(set(status_id_to_in_reply_to_status_id.keys()) - set(status_id_to_in_reply_to_status_id.values())):  # is leaf
         full_texts = []
         user_ids = []
 
@@ -97,7 +99,7 @@ while True:
 
             status_id = status_id_to_in_reply_to_status_id[status_id]
         
-    with open(f'{datetime.now():%Y%m%d%H%M%S%f}.tsv', 'w', encoding='utf-8') as f:
+    with open(os.path.join(args.output_dir, f'{datetime.now():%Y%m%d%H%M%S%f}.tsv'), 'w', encoding='utf-8') as f:
         for dialogue in dialogues:
             f.write('\t'.join(dialogue) + '\n')
 

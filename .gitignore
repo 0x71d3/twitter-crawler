@@ -1,6 +1,4 @@
 .env
 
-tsvs/
-
-turn*/
-wakati*/
+*.tsv
+*.bz2
